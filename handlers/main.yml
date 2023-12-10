@@ -1,0 +1,9 @@
+---
+# handlers file for compose_healer
+
+- name: Restart docker-compose-healer.service
+  become: true
+  ansible.builtin.service:
+    name: docker-compose-healer.service
+    state: restarted
+  when: not _docker_compose_healer_enabled.changed

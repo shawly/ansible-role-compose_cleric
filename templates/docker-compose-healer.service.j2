@@ -1,0 +1,13 @@
+[Unit]
+Description=Docker Compose Healer
+Wants=docker.socket
+After=docker.service
+
+[Service]
+Type=simple
+ExecStart=/opt/compose_healer/healer.sh
+KillSignal=SIGINT
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

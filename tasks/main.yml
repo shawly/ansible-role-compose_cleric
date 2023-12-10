@@ -1,0 +1,50 @@
+---
+# tasks file for compose_healer
+
+- name: Upload docker-compose-healer.service
+  become: true
+  ansible.builtin.template:
+    src: docker-compose-healer.service.j2
+    dest: /lib/systemd/system/docker-compose-healer.service
+    owner: root
+    group: root
+    mode: "0644"
+  tags:
+    - compose_healer
+
+- name: Create /opt/compose_healer
+  become: true
+  ansible.builtin.file:
+    path: /opt/compose_healer
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  tags:
+    - compose_healer
+
+- name: Upload healer.sh to /opt/compose_healer/healer.sh
+  become: true
+  ansible.builtin.copy:
+    src: healer.sh
+    dest: /opt/compose_healer/healer.sh
+    owner: root
+    group: root
+    mode: "0755"
+  notify: Restart docker-compose-healer.service
+  tags:
+    - compose_healer
+
+- name: Enable and start docker-compose-healer.service
+  become: true
+  ansible.builtin.service:
+    name: docker-compose-healer
+    enabled: true
+    state: started
+    daemon_reload: true
+  register: _docker_compose_healer_enabled
+  tags:
+    - compose_healer
+
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
