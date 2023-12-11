@@ -37,8 +37,8 @@ try_healing_container() {
     container_data=$(docker inspect "$container_id" --format '{{json .}}')
     container_name=$(echo "$container_data" | jq -r '.Name')
     compose_project=$(echo "$container_data" | jq -r '.Config.Labels."com.docker.compose.project"')
-    healer_enabled=$(echo "$container_data" | jq -r --arg HEALER_LABEL_ENABLED "${HEALER_LABEL_ENABLED}" '.Config.Labels[$HEALER_LABEL_ENABLED] // false')
-    healer_monitor_only=$(echo "$container_data" | jq -r --arg HEALER_LABEL_MONITOR_ONLY "${HEALER_LABEL_MONITOR_ONLY}" '.Config.Labels[$HEALER_LABEL_MONITOR_ONLY] // false')
+    healer_enabled=$(echo "$container_data" | jq -r --arg HEALER_LABEL_ENABLED "${HEALER_LABEL_ENABLED}" '.Config.Labels[$HEALER_LABEL_ENABLED] |= ascii_downcase // false')
+    healer_monitor_only=$(echo "$container_data" | jq -r --arg HEALER_LABEL_MONITOR_ONLY "${HEALER_LABEL_MONITOR_ONLY}" '.Config.Labels[$HEALER_LABEL_MONITOR_ONLY] |= ascii_downcase // false')
     healer_restart_limit=$(echo "$container_data" | jq -r --arg HEALER_LABEL_RESTART_LIMIT "${HEALER_LABEL_RESTART_LIMIT}" '.Config.Labels[$HEALER_LABEL_RESTART_LIMIT] // 10')
     healer_restart_limit_cmd=$(echo "$container_data" | jq -r --arg HEALER_LABEL_RESTART_LIMIT_CMD "${HEALER_LABEL_RESTART_LIMIT_CMD}" '.Config.Labels[$HEALER_LABEL_RESTART_LIMIT_CMD] // "ignore"')
 
