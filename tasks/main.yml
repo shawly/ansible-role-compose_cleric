@@ -1,50 +1,50 @@
 ---
-# tasks file for compose_healer
+# tasks file for shawly.compose_cleric
 
-- name: Upload docker-compose-healer.service
+- name: Upload compose-cleric.service
   become: true
   ansible.builtin.template:
-    src: docker-compose-healer.service.j2
-    dest: /lib/systemd/system/docker-compose-healer.service
+    src: compose-cleric.service.j2
+    dest: "{{ compose_cleric_service_dir }}/compose-cleric.service"
     owner: root
     group: root
     mode: "0644"
   tags:
-    - compose_healer
+    - compose_cleric
 
-- name: Create /opt/compose_healer
+- name: Create {{ compose_cleric_install_dir }}
   become: true
   ansible.builtin.file:
-    path: /opt/compose_healer
+    path: "{{ compose_cleric_install_dir }}"
     state: directory
     owner: root
     group: root
     mode: "0755"
   tags:
-    - compose_healer
+    - compose_cleric
 
-- name: Upload healer.sh to /opt/compose_healer/healer.sh
+- name: Upload cleric.sh to {{ compose_cleric_install_dir }}
   become: true
   ansible.builtin.copy:
-    src: healer.sh
-    dest: /opt/compose_healer/healer.sh
+    src: cleric.sh
+    dest: "{{ compose_cleric_install_dir }}/cleric.sh"
     owner: root
     group: root
     mode: "0755"
-  notify: Restart docker-compose-healer.service
+  notify: Restart compose-cleric.service
   tags:
-    - compose_healer
+    - compose_cleric
 
-- name: Enable and start docker-compose-healer.service
+- name: Enable and start compose-cleric.service
   become: true
   ansible.builtin.service:
-    name: docker-compose-healer
+    name: compose-cleric
     enabled: true
     state: started
     daemon_reload: true
-  register: _docker_compose_healer_enabled
+  register: _compose_cleric_service_enabled
   tags:
-    - compose_healer
+    - compose_cleric
 
 - name: Flush handlers
   ansible.builtin.meta: flush_handlers

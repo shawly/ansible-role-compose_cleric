@@ -2,11 +2,11 @@
 
 set -euo pipefail
 
-HEALER_LABEL_SPACE="de.shawly.healer"
-HEALER_LABEL_ENABLED="${HEALER_LABEL_SPACE}.enabled"
-HEALER_LABEL_MONITOR_ONLY="${HEALER_LABEL_SPACE}.monitor-only"
-HEALER_LABEL_RESTART_LIMIT="${HEALER_LABEL_SPACE}.restart-limit"
-HEALER_LABEL_RESTART_LIMIT_CMD="${HEALER_LABEL_SPACE}.restart-limit-cmd"
+CLERIC_LABEL_SPACE="de.shawly.compose.cleric"
+CLERIC_LABEL_ENABLED="${CLERIC_LABEL_SPACE}.enabled"
+CLERIC_LABEL_MONITOR_ONLY="${CLERIC_LABEL_SPACE}.monitor-only"
+CLERIC_LABEL_RESTART_LIMIT="${CLERIC_LABEL_SPACE}.restart-limit"
+CLERIC_LABEL_RESTART_LIMIT_CMD="${CLERIC_LABEL_SPACE}.restart-limit-cmd"
 
 command -v docker >/dev/null || {
     echo "Docker is not installed"
@@ -31,23 +31,23 @@ trap 'kill $$; term_handler' SIGTERM
 try_healing_container() {
     local container_data container_id container_name container_network_link container_restarts \
         compose_project compose_service project_working_dir \
-        healer_enabled healer_monitor_only healer_restart_limit healer_restart_limit_cmd \
+        cleric_enabled cleric_monitor_only cleric_restart_limit cleric_restart_limit_cmd \
         _up_error
     container_id=${1:?}
     container_data=$(docker inspect "$container_id" --format '{{json .}}')
     container_name=$(echo "$container_data" | jq -r '.Name')
     compose_project=$(echo "$container_data" | jq -r '.Config.Labels."com.docker.compose.project"')
-    healer_enabled=$(echo "$container_data" | jq -r --arg HEALER_LABEL_ENABLED "${HEALER_LABEL_ENABLED}" '.Config.Labels[$HEALER_LABEL_ENABLED] |= ascii_downcase // false')
-    healer_monitor_only=$(echo "$container_data" | jq -r --arg HEALER_LABEL_MONITOR_ONLY "${HEALER_LABEL_MONITOR_ONLY}" '.Config.Labels[$HEALER_LABEL_MONITOR_ONLY] |= ascii_downcase // false')
-    healer_restart_limit=$(echo "$container_data" | jq -r --arg HEALER_LABEL_RESTART_LIMIT "${HEALER_LABEL_RESTART_LIMIT}" '.Config.Labels[$HEALER_LABEL_RESTART_LIMIT] // 10')
-    healer_restart_limit_cmd=$(echo "$container_data" | jq -r --arg HEALER_LABEL_RESTART_LIMIT_CMD "${HEALER_LABEL_RESTART_LIMIT_CMD}" '.Config.Labels[$HEALER_LABEL_RESTART_LIMIT_CMD] // "ignore"')
+    cleric_enabled=$(echo "$container_data" | jq -r --arg CLERIC_LABEL_ENABLED "${CLERIC_LABEL_ENABLED}" '.Config.Labels[$CLERIC_LABEL_ENABLED] |= ascii_downcase // false')
+    cleric_monitor_only=$(echo "$container_data" | jq -r --arg CLERIC_LABEL_MONITOR_ONLY "${CLERIC_LABEL_MONITOR_ONLY}" '.Config.Labels[$CLERIC_LABEL_MONITOR_ONLY] |= ascii_downcase // false')
+    cleric_restart_limit=$(echo "$container_data" | jq -r --arg CLERIC_LABEL_RESTART_LIMIT "${CLERIC_LABEL_RESTART_LIMIT}" '.Config.Labels[$CLERIC_LABEL_RESTART_LIMIT] // 10')
+    cleric_restart_limit_cmd=$(echo "$container_data" | jq -r --arg CLERIC_LABEL_RESTART_LIMIT_CMD "${CLERIC_LABEL_RESTART_LIMIT_CMD}" '.Config.Labels[$CLERIC_LABEL_RESTART_LIMIT_CMD] // "ignore"')
 
     container_restarts="container_${container_id}_restarts"
     [[ -n "${!container_restarts:-}" ]] || export "${container_restarts}"=0
-    if [[ "${!container_restarts}" -ge "${healer_restart_limit:-10}" ]]; then
-        if [[ "${healer_restart_limit_cmd}" != "ignore" ]]; then
-            echo "Container $container_name ($container_id) is unhealthy and has been restarted ${!container_restarts} times, $healer_restart_limit_cmd container..."
-            docker "$healer_restart_limit_cmd" "$container_id"
+    if [[ "${!container_restarts}" -ge "${cleric_restart_limit:-10}" ]]; then
+        if [[ "${cleric_restart_limit_cmd}" != "ignore" ]]; then
+            echo "Container $container_name ($container_id) is unhealthy and has been restarted ${!container_restarts} times, $cleric_restart_limit_cmd container..."
+            docker "$cleric_restart_limit_cmd" "$container_id"
             echo "Container $container_name ($container_id) has been stopped! Please fix the container manually."
         else
             echo "Container $container_name ($container_id) is unhealthy and has been restarted ${!container_restarts} times, ignoring..."
@@ -56,14 +56,14 @@ try_healing_container() {
     fi
 
     if [[ "${compose_project:-null}" == "null" ]]; then
-        if [[ "${healer_enabled:-false}" == "true" ]]; then
+        if [[ "${cleric_enabled:-false}" == "true" ]]; then
             echo "Container $container_name ($container_id) is unhealthy, restarting (restarts: ${!container_restarts})..."
             export "${container_restarts}"=$((container_restarts + 1))
             docker restart "$container_id" &
-        elif [[ "${healer_monitor_only:-false}" == "true" ]]; then
+        elif [[ "${cleric_monitor_only:-false}" == "true" ]]; then
             echo "Container $container_name ($container_id) is unhealthy, but is set to monitor only, skipping..."
         else
-            echo "Container $container_name ($container_id) is unhealthy, but healer is not enabled, skipping..."
+            echo "Container $container_name ($container_id) is unhealthy, but cleric is not enabled, skipping..."
         fi
         return 0
     fi
@@ -73,7 +73,7 @@ try_healing_container() {
         project_working_dir=$(echo "$container_data" | jq -r '.Config.Labels."com.docker.compose.project.working_dir"')
         container_network_link=$(echo "$container_data" | jq -r '.HostConfig.NetworkMode | match("container:(.+)").captures | first | .string')
 
-        if [[ "${healer_enabled:-false}" == "true" ]]; then
+        if [[ "${cleric_enabled:-false}" == "true" ]]; then
             echo "Service $container_name ($container_id) in project \"$compose_project\" is unhealthy, restarting service (restarts: ${!container_restarts})..."
             export "${container_restarts}"=$((container_restarts + 1))
 
@@ -92,10 +92,10 @@ try_healing_container() {
             else
                 docker compose --progress=plain --project-directory "${project_working_dir}" restart "${compose_service}" &
             fi
-        elif [[ "${healer_monitor_only:-false}" == "true" ]]; then
+        elif [[ "${cleric_monitor_only:-false}" == "true" ]]; then
             echo "Service $compose_service ($container_id) in project $compose_project is unhealthy, but is set to monitor only, skipping..."
         else
-            echo "Service $compose_service ($container_id) in project $compose_project is unhealthy, but healer is not enabled, skipping..."
+            echo "Service $compose_service ($container_id) in project $compose_project is unhealthy, but cleric is not enabled, skipping..."
         fi
 
         return 0
@@ -126,7 +126,7 @@ wait_for_unhealthy_events() {
     done < <(docker events --format '{{json .}}' --filter 'event=health_status')
 }
 
-echo "Starting Compose Healer..."
+echo "Starting Compose Cleric..."
 
 check_for_unhealthy_containers
 

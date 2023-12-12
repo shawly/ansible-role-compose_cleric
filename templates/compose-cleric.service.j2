@@ -1,11 +1,11 @@
 [Unit]
-Description=Docker Compose Healer
+Description=Docker Compose Cleric
 Wants=docker.socket
 After=docker.service
 
 [Service]
 Type=simple
-ExecStart=/opt/compose_healer/healer.sh
+ExecStart={{ compose_cleric_install_dir }}/cleric.sh
 KillSignal=SIGINT
 Restart=on-failure
 

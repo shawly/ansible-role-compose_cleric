@@ -1,9 +1,9 @@
 ---
-# handlers file for compose_healer
+# handlers file for shawly.compose_cleric
 
-- name: Restart docker-compose-healer.service
+- name: Restart compose-cleric.service
   become: true
   ansible.builtin.service:
-    name: docker-compose-healer.service
+    name: compose-cleric.service
     state: restarted
-  when: not _docker_compose_healer_enabled.changed
+  when: not _compose_cleric_service_enabled.changed

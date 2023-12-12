@@ -1,2 +1,5 @@
 ---
-# defaults file for compose_healer
+# defaults file for shawly.compose_cleric
+
+compose_cleric_install_dir: /opt/compose_cleric
+compose_cleric_service_dir: /lib/systemd/system
