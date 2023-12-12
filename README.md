@@ -24,6 +24,7 @@ Available labels are:
 - `de.shawly.compose.cleric.monitor-only` - Will only monitor the container and log if it is unhealthy when set to `true`.
 - `de.shawly.compose.cleric.restart-limit` - Per default, cleric will stop revival attempts after 10 restarts, with this label you can increase or decrease that value.
 - `de.shawly.compose.cleric.restart-limit-cmd` - If the restart limit has been reached, the default is "ignored" so cleric will simply ignore the containers state. You can change this to any docker command like "restart", "stop" or "kill", if you set it to restart, cleric will restart the container infinitely!
+- `de.shawly.compose.cleric.restart-wait` - Time before the container is restarted in seconds, afterwards a last healthcheck will be done before restarting. The default is 15 seconds, with this label you can increase or decrease that value.
 
 ## Installation without Ansible
 

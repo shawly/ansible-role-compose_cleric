@@ -7,6 +7,7 @@ CLERIC_LABEL_ENABLED="${CLERIC_LABEL_SPACE}.enabled"
 CLERIC_LABEL_MONITOR_ONLY="${CLERIC_LABEL_SPACE}.monitor-only"
 CLERIC_LABEL_RESTART_LIMIT="${CLERIC_LABEL_SPACE}.restart-limit"
 CLERIC_LABEL_RESTART_LIMIT_CMD="${CLERIC_LABEL_SPACE}.restart-limit-cmd"
+CLERIC_LABEL_RESTART_WAIT="${CLERIC_LABEL_SPACE}.restart-wait"
 
 command -v docker >/dev/null || {
     echo "Docker is not installed"
@@ -37,13 +38,28 @@ try_healing_container() {
     container_data=$(docker inspect "$container_id" --format '{{json .}}')
     container_name=$(echo "$container_data" | jq -r '.Name')
     compose_project=$(echo "$container_data" | jq -r '.Config.Labels."com.docker.compose.project"')
-    cleric_enabled=$(echo "$container_data" | jq -r --arg CLERIC_LABEL_ENABLED "${CLERIC_LABEL_ENABLED}" '.Config.Labels[$CLERIC_LABEL_ENABLED] |= ascii_downcase // false')
-    cleric_monitor_only=$(echo "$container_data" | jq -r --arg CLERIC_LABEL_MONITOR_ONLY "${CLERIC_LABEL_MONITOR_ONLY}" '.Config.Labels[$CLERIC_LABEL_MONITOR_ONLY] |= ascii_downcase // false')
+    cleric_enabled=$(echo "$container_data" | jq -r --arg CLERIC_LABEL_ENABLED "${CLERIC_LABEL_ENABLED}" '.Config.Labels[$CLERIC_LABEL_ENABLED] // false' | tr '[:upper:]' '[:lower:]')
+    cleric_monitor_only=$(echo "$container_data" | jq -r --arg CLERIC_LABEL_MONITOR_ONLY "${CLERIC_LABEL_MONITOR_ONLY}" '.Config.Labels[$CLERIC_LABEL_MONITOR_ONLY] // false' | tr '[:upper:]' '[:lower:]')
     cleric_restart_limit=$(echo "$container_data" | jq -r --arg CLERIC_LABEL_RESTART_LIMIT "${CLERIC_LABEL_RESTART_LIMIT}" '.Config.Labels[$CLERIC_LABEL_RESTART_LIMIT] // 10')
     cleric_restart_limit_cmd=$(echo "$container_data" | jq -r --arg CLERIC_LABEL_RESTART_LIMIT_CMD "${CLERIC_LABEL_RESTART_LIMIT_CMD}" '.Config.Labels[$CLERIC_LABEL_RESTART_LIMIT_CMD] // "ignore"')
+    cleric_restart_wait=$(echo "$container_data" | jq -r --arg CLERIC_LABEL_RESTART_WAIT "${CLERIC_LABEL_RESTART_WAIT}" '.Config.Labels[$CLERIC_LABEL_RESTART_WAIT] // 15')
+
+    if [[ "${cleric_restart_wait}" -gt 0 ]]; then
+        echo "Container $container_name ($container_id) is unhealthy, waiting ${cleric_restart_wait}s before restarting..."
+        sleep "${cleric_restart_wait}"
+        container_data=$(docker inspect "$container_id" --format '{{json .}}')
+        container_status=$(echo "$container_data" | jq -r '.State.Health.Status')
+        if [[ "${container_status:-null}" == "healthy" ]]; then
+            echo "Container $container_name ($container_id) recovered itself, not restarting..."
+            return 0
+        fi
+    fi
 
     container_restarts="container_${container_id}_restarts"
+    container_last_restart="container_${container_id}_last_restart"
+    current_timestamp="$(date +%s)"
     [[ -n "${!container_restarts:-}" ]] || export "${container_restarts}"=0
+    [[ -n "${!container_last_restart:-}" ]] || export "${container_last_restart}"="${current_timestamp}"
     if [[ "${!container_restarts}" -ge "${cleric_restart_limit:-10}" ]]; then
         if [[ "${cleric_restart_limit_cmd}" != "ignore" ]]; then
             echo "Container $container_name ($container_id) is unhealthy and has been restarted ${!container_restarts} times, $cleric_restart_limit_cmd container..."
@@ -55,10 +71,17 @@ try_healing_container() {
         return 0
     fi
 
+    # if time between now and last restart is greater than 120 seconds, we can assume the service isn't restarting continuously
+    time_delta=$((current_timestamp - !container_last_restart))
+    if [[ "${time_delta}" -gt 120 ]]; then
+        export "${container_restarts}"=0
+    fi
+
     if [[ "${compose_project:-null}" == "null" ]]; then
         if [[ "${cleric_enabled:-false}" == "true" ]]; then
             echo "Container $container_name ($container_id) is unhealthy, restarting (restarts: ${!container_restarts})..."
             export "${container_restarts}"=$((container_restarts + 1))
+            export "${container_last_restart}"="$(date +%s)"
             docker restart "$container_id" &
         elif [[ "${cleric_monitor_only:-false}" == "true" ]]; then
             echo "Container $container_name ($container_id) is unhealthy, but is set to monitor only, skipping..."
@@ -76,6 +99,7 @@ try_healing_container() {
         if [[ "${cleric_enabled:-false}" == "true" ]]; then
             echo "Service $container_name ($container_id) in project \"$compose_project\" is unhealthy, restarting service (restarts: ${!container_restarts})..."
             export "${container_restarts}"=$((container_restarts + 1))
+            export "${container_last_restart}"="$(date +%s)"
 
             COMPOSE_FILE=$(echo "$container_data" | jq -r '.Config.Labels."com.docker.compose.project.config_files" | split(",") | join(":")')
             export COMPOSE_FILE
