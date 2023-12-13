@@ -1,0 +1,24 @@
+---
+galaxy_info:
+  role_name: compose_cleric
+  author: shawly
+  description: An Ansible role for spinning up a service that checks for unhealthy containers and restarts them.
+  license: GPL-3.0-or-later
+  min_ansible_version: "2.1"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - focal
+    - name: Debian
+      versions:
+        - bookworm
+        - bullseye
+
+  galaxy_tags:
+    - docker
+    - compose
+    - cleric
+    - utility
+
+dependencies: []
