@@ -155,8 +155,8 @@ jobs:
         if: (success() || failure()) && env.APPLY_FIXES_IF_PR == 'true'
         with:
           token: ${{ secrets.PAT || secrets.GITHUB_TOKEN }}
-          commit-message: "style: apply linters automatic fixes"
-          title: "[MegaLinter] Apply linters automatic fixes"
+          commit-message: "style(megalinter): apply automatic fixes"
+          title: "style(megalinter): apply automatic fixes"
           labels: bot
           branch: megalinter/fixes
           body: |
