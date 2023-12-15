@@ -1,0 +1,31 @@
+---
+# Uncomment to disable copy-paste and spell checks
+DISABLE:
+  - COPYPASTE
+  - SPELL
+
+EXCLUDED_DIRECTORIES:
+  - node_modules
+  - megalinter-reports
+  - .venv
+  - .cache
+
+# Run ansible lint on any dir
+ANSIBLE_DIRECTORY: "."
+
+ANSIBLE_ANSIBLE_LINT_PRE_COMMANDS:
+  - cwd: workspace
+    command: pip install -r requirements.txt
+  - cwd: workspace
+    command: ansible-galaxy install -r meta/requirements.yml
+  - cwd: workspace
+    command: ansible-galaxy collection install -r meta/requirements.yml
+
+# Disable shellcheck errors
+BASH_SHELLCHECK_DISABLE_ERRORS: true
+
+# sh files should be indented with 4 spaces by default
+BASH_SHFMT_ARGUMENTS: --indent 4
+
+# Ignore Dockerfiles that are only used for building temporary stuff not for runtime
+DOCKERFILE_FILTER_REGEX_EXCLUDE: "(.*/roles/.*/files/.*Dockerfile)"

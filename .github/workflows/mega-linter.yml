@@ -94,15 +94,6 @@ jobs:
 
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-          # ADD YOUR CUSTOM ENV VARIABLES HERE OR DEFINE THEM IN A FILE
-          # .mega-linter.yml AT THE ROOT OF YOUR REPOSITORY
-
-          # Uncomment to disable copy-paste and spell checks
-          DISABLE: COPYPASTE,SPELL
-
-          # Run ansible lint on any dir
-          ANSIBLE_DIRECTORY: "."
-
       # Upload MegaLinter artifacts
       - name: Archive production artifacts
         uses: actions/upload-artifact@v3
