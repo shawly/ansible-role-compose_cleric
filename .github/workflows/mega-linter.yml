@@ -1,7 +1,10 @@
+# kics-scan disable=555ab8f9-2001-455e-a077-f2d0f41e2fb9
 # MegaLinter GitHub Action configuration file
 # More info at https://megalinter.io
 ---
 name: MegaLinter
+
+permissions: read-all
 
 # Trigger mega-linter at every push. Action will also be visible from Pull
 # Requests to main
