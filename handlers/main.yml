@@ -6,4 +6,4 @@
   ansible.builtin.service:
     name: compose-cleric.service
     state: restarted
-  when: not _compose_cleric_service_enabled.changed
+  when: not __compose_cleric_service_enabled.changed

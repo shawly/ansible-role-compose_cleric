@@ -42,7 +42,7 @@
     enabled: true
     state: started
     daemon_reload: true
-  register: _compose_cleric_service_enabled
+  register: __compose_cleric_service_enabled
   tags:
     - compose_cleric
 
