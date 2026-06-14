@@ -3,7 +3,7 @@
 An Ansible role for spinning up a service that checks for unhealthy containers and restarts them. This is similar to [willfarrell/docker-autoheal](https://github.com/willfarrell/docker-autoheal) but it runs as systemd service unit.
 
 It also checks if a compose service uses the network of another container and runs `docker compose up -d` instead if the linked container doesn't exist anymore.
-This should circumvent problems like [this one](https://github.com/qdm12/gluetun/issues/641). It's certainly not as cool as deunhealth or autoheal because it doesn't yet have notifications and other fancy stuff, but I didn't really need that.
+This should circumvent problems like [this one](https://github.com/passteque/gluetun/issues/641). It's certainly not as cool as deunhealth or autoheal because it doesn't yet have notifications and other fancy stuff, but I didn't really need that.
 
 Also check out my [`shawly.compose_artificer`](https://github.com/shawly/ansible-role-compose_artificer) role which automatically sets the cleric labels to all containers in a compose stack.
 
